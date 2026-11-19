@@ -1,2 +1,2 @@
-# Ledher
+# Ledger
 Payment Ledger
