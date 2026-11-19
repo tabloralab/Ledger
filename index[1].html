@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Payment Ledger</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#14213d">
+<link rel="icon" href="icon-192.png">
+<style>
+:root{--navy:#0b1b3a;--bg:#f2f4f9;--card:#fff;--line:#e3e8f1;--muted:#6a778f;--text:#14213d;--in:#0b8a5f;--inbg:#e2f5ec;--out:#d2452b;--outbg:#fdebe6;--blue:#2f5bea;--blueshade:rgba(47,91,234,.28);--bluebg:#e9efff}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);padding-bottom:calc(84px + env(safe-area-inset-bottom));font-size:15px}
+header{background:var(--navy);color:#fff;padding:calc(14px + env(safe-area-inset-top)) 18px 18px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:5;border-radius:0 0 22px 22px;box-shadow:0 6px 18px rgba(11,27,58,.25)}
+header .logo{width:34px;height:34px;border-radius:9px}
+header h1{font-size:19px;margin:0;flex:1;font-weight:700;letter-spacing:.2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+header button{background:rgba(255,255,255,.14);border:0;color:#fff;font-size:14px;padding:8px 14px;border-radius:20px}
+main{padding:18px 16px;max-width:640px;margin:0 auto}
+.card{background:var(--card);border-radius:18px;padding:16px;margin-bottom:14px;box-shadow:0 2px 12px rgba(20,33,61,.07)}
+.card>b{font-size:16px;display:block;margin-bottom:6px}
+.row{display:flex;gap:12px}.row>*{flex:1;min-width:0}
+.big{font-size:24px;font-weight:800;margin-top:6px;letter-spacing:.2px}
+.lbl{font-size:13px;color:var(--muted)}
+.in{color:var(--in)}.out{color:var(--out)}
+.stat{margin-bottom:14px}
+.stat.sin{background:var(--inbg)}.stat.sout{background:var(--outbg)}
+.stat .lbl{color:var(--text);opacity:.7;font-weight:600}
+.hero{background:var(--navy);color:#fff}
+.hero .lbl{color:#b9c5de}
+.hero .big{font-size:30px}
+.hero .big.in{color:#6ee7b7}.hero .big.out{color:#ffb4a5}
+.item{display:flex;align-items:center;gap:12px;padding:13px 2px;border-bottom:1px solid var(--line);cursor:pointer}
+.item:last-child{border-bottom:0}
+.item:active{background:#f6f8fc}
+.item .grow{flex:1;min-width:0;font-weight:600}
+.item small{display:block;color:var(--muted);margin-top:3px;font-weight:400;font-size:13px}
+.amt{font-weight:700;white-space:nowrap;text-align:right}
+.amt small{font-weight:500}
+.av{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;flex:none}
+.av.customer{background:var(--bluebg);color:var(--blue)}
+.av.supplier{background:#fff1dc;color:#b36200}
+.dot{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;flex:none}
+.dot.in{background:var(--inbg);color:var(--in)}.dot.out{background:var(--outbg);color:var(--out)}
+.tag{display:inline-block;font-size:11px;padding:2px 8px;border-radius:10px;margin-right:6px;font-weight:600}
+.tag.customer{background:var(--bluebg);color:var(--blue)}.tag.supplier{background:#fff1dc;color:#b36200}
+button.btn{background:var(--blue);color:#fff;border:0;border-radius:14px;padding:14px 16px;font-size:16px;font-weight:700;width:100%;box-shadow:0 6px 14px var(--blueshade);transition:transform .08s}
+button.btn:active{transform:scale(.98)}
+button.alt{background:#fff;color:var(--blue);border:1.5px solid #c9d5fb;box-shadow:none}
+button.red{background:var(--out);box-shadow:0 6px 14px rgba(210,69,43,.25)}
+input,select,textarea{width:100%;padding:13px 14px;font-size:16px;border:1.5px solid transparent;border-radius:12px;background:#f2f5fb;color:var(--text);margin:5px 0 14px;font-family:inherit}
+input:focus,select:focus{outline:none;border-color:var(--blue);background:#fff}
+label{font-size:13px;color:var(--muted);font-weight:600}
+.chips{display:flex;gap:8px;margin-bottom:12px}
+.chip{flex:1;padding:10px;border:0;background:#fff;border-radius:22px;font-size:14px;font-weight:600;color:var(--muted);box-shadow:0 1px 6px rgba(20,33,61,.07)}
+.chip.on{background:var(--navy);color:#fff}
+nav{position:fixed;bottom:0;left:0;right:0;background:#fff;box-shadow:0 -4px 18px rgba(20,33,61,.09);display:flex;padding:6px 8px calc(6px + env(safe-area-inset-bottom));z-index:5;border-radius:20px 20px 0 0}
+nav button{flex:1;border:0;background:none;padding:8px 4px;font-size:12px;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:3px;font-weight:600}
+nav button svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+nav button.on{color:var(--blue)}
+.ov{position:fixed;inset:0;background:rgba(11,27,58,.55);display:flex;align-items:flex-end;justify-content:center;z-index:20}
+.sheet{background:#fff;width:100%;max-width:640px;border-radius:24px 24px 0 0;padding:14px 18px calc(20px + env(safe-area-inset-bottom));max-height:92vh;overflow:auto}
+.sheet::before{content:"";display:block;width:42px;height:4px;border-radius:2px;background:#d3dae8;margin:0 auto 14px}
+.sheet h2{margin:0 0 14px;font-size:20px}
+.warn{background:#fff4e0;color:#7a4a00;border-radius:14px;padding:14px;margin-bottom:14px;font-size:14px;line-height:1.45}
+.empty{text-align:center;color:var(--muted);padding:26px 10px}
+.gap{margin-top:12px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:100px;background:var(--navy);color:#fff;padding:11px 20px;border-radius:24px;z-index:30;font-size:14px;box-shadow:0 6px 18px rgba(0,0,0,.25)}
+</style>
+</head>
+<body>
+<header><img class="logo" src="icon-192.png" alt=""><button id="back" style="display:none" onclick="goParties()">&larr; Back</button><h1 id="title">Payment Ledger</h1></header>
+<main id="main"></main>
+<nav>
+<button id="t-home" onclick="go('home')"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>Home</button>
+<button id="t-parties" onclick="goParties()"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.6 2.9-6 6.5-6s6.5 2.4 6.5 6"/><path d="M16 4.8a3.5 3.5 0 010 6.4M18 14.5c2 .7 3.5 2.6 3.5 5.5"/></svg>Parties</button>
+<button id="t-backup" onclick="go('backup')"><svg viewBox="0 0 24 24"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M4 20h16"/></svg>Backup</button>
+</nav>
+
+<script>
+"use strict";
+var $=function(s){return document.querySelector(s)};
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function money(n){return Number(n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function today(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+
+function ini(n){var w=String(n).trim().split(/\s+/);return esc(((w[0]||'?')[0]+((w[1]||'')[0]||'')).toUpperCase())}
+function dot(k){return '<span class="dot '+(k==='pay'?'in':'out')+'">'+(k==='pay'?'&darr;':'&uarr;')+'</span>'}
+/* ---------- Database (IndexedDB) ---------- */
+var db;
+function openDB(){return new Promise(function(res,rej){
+  var r=indexedDB.open('ledger',1);
+  r.onupgradeneeded=function(){var d=r.result;
+    d.createObjectStore('parties',{keyPath:'id',autoIncrement:true});
+    d.createObjectStore('entries',{keyPath:'id',autoIncrement:true});
+    d.createObjectStore('meta',{keyPath:'k'});};
+  r.onsuccess=function(){db=r.result;res()};
+  r.onerror=function(){rej(r.error)};
+})}
+function tx(store,mode,fn){return new Promise(function(res,rej){
+  var t=db.transaction(store,mode),rq=fn(t.objectStore(store));
+  t.oncomplete=function(){res(rq&&rq.result)};
+  t.onerror=t.onabort=function(){rej(t.error)};
+})}
+function dbAll(s){return tx(s,'readonly',function(st){return st.getAll()})}
+function dbPut(s,o){return tx(s,'readwrite',function(st){return st.put(o)})}
+function dbDel(s,id){return tx(s,'readwrite',function(st){return st.delete(id)})}
+
+var parties=[],entries=[],settings={currency:'SAR',lastBackup:''};
+var view='home',pid=null,filter='all',q='';
+
+async function load(){
+  parties=await dbAll('parties');entries=await dbAll('entries');
+  var meta=await dbAll('meta');
+  meta.forEach(function(m){settings[m.k]=m.v});
+}
+function saveSetting(k,v){settings[k]=v;return dbPut('meta',{k:k,v:v})}
+
+/* ---------- Calculations ---------- */
+function balance(id){
+  var b=0;
+  entries.forEach(function(e){if(e.partyId===id){b+=(e.kind==='bill'?1:-1)*e.amount}});
+  return Math.round(b*100)/100;
+}
+function partyById(id){return parties.find(function(p){return p.id===id})}
+function words(p,kind){
+  if(p.type==='customer')return kind==='bill'?'Invoice sent':'Payment received';
+  return kind==='bill'?'Bill received':'Payment made';
+}
+function balText(p,b){
+  if(b===0)return 'Settled';
+  if(p.type==='customer')return b>0?'Owes you':'Paid extra';
+  return b>0?'You owe':'You overpaid';
+}
+function toast(m){var t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(function(){t.remove()},2200)}
+
+/* ---------- Navigation ---------- */
+function go(v){view=v;render()}
+function goParties(){view='parties';pid=null;render()}
+function openParty(id){pid=id;view='party';render()}
+
+function render(){
+  ['home','parties','backup'].forEach(function(t){$('#t-'+t).className=(view===t||(view==='party'&&t==='parties'))?'on':''});
+  $('#back').style.display=view==='party'?'inline-block':'none';
+  var m=$('#main');
+  if(view==='home'){$('#title').textContent='Payment Ledger';m.innerHTML=homeHTML()}
+  else if(view==='parties'){$('#title').textContent='Customers and Suppliers';m.innerHTML=partiesHTML()}
+  else if(view==='party'){var p=partyById(pid);if(!p){goParties();return}$('#title').textContent=p.name;m.innerHTML=partyHTML(p)}
+  else{$('#title').textContent='Backup';m.innerHTML=backupHTML()}
+}
+
+/* ---------- Screens ---------- */
+function homeHTML(){
+  var rec=0,pay=0;
+  parties.forEach(function(p){var b=balance(p.id);if(p.type==='customer')rec+=b;else pay+=b});
+  var c=esc(settings.currency);
+  var h='';
+  if(entries.length||parties.length){
+    var d=settings.lastBackup?Math.floor((Date.now()-new Date(settings.lastBackup))/864e5):null;
+    if(d===null)h+='<div class="warn"><b>No backup yet.</b> Your data is only on this phone. Make a backup now.<div class="gap"><button class="btn" onclick="go(\'backup\')">Go to Backup</button></div></div>';
+    else if(d>=7)h+='<div class="warn"><b>Last backup was '+d+' days ago.</b> Make a new backup.<div class="gap"><button class="btn" onclick="go(\'backup\')">Go to Backup</button></div></div>';
+  }
+  h+='<div class="row"><div class="card stat sin"><div class="lbl">Customers owe you</div><div class="big in">'+money(rec)+'</div><div class="lbl">'+c+'</div></div>'+
+     '<div class="card stat sout"><div class="lbl">You owe suppliers</div><div class="big out">'+money(pay)+'</div><div class="lbl">'+c+'</div></div></div>';
+  var top=parties.map(function(p){return {p:p,b:balance(p.id)}}).filter(function(x){return x.b!==0}).sort(function(a,b){return Math.abs(b.b)-Math.abs(a.b)}).slice(0,5);
+  h+='<div class="card"><b>Largest open balances</b>';
+  if(!top.length)h+='<div class="empty">Nothing open. Add a customer or supplier in Parties.</div>';
+  top.forEach(function(x){h+=partyRow(x.p,x.b)});
+  h+='</div>';
+  var last=entries.slice().sort(function(a,b){return (b.date+b.id).toString().localeCompare((a.date+a.id).toString())}).slice(0,5);
+  if(last.length){h+='<div class="card"><b>Latest entries</b>';
+    last.forEach(function(e){var p=partyById(e.partyId);if(!p)return;
+      h+='<div class="item" onclick="openParty('+p.id+')">'+dot(e.kind)+'<div class="grow">'+esc(p.name)+'<small>'+esc(e.date)+' - '+words(p,e.kind)+'</small></div><div class="amt '+(e.kind==='pay'?'in':'out')+'">'+money(e.amount)+'</div></div>'});
+    h+='</div>'}
+  return h;
+}
+function partyRow(p,b){
+  return '<div class="item" onclick="openParty('+p.id+')"><span class="av '+p.type+'">'+ini(p.name)+'</span><div class="grow">'+esc(p.name)+'<small><span class="tag '+p.type+'">'+(p.type==='customer'?'Customer':'Supplier')+'</span>'+(p.phone?esc(p.phone):'')+'</small></div>'+
+  '<div class="amt '+(b===0?'':(p.type==='customer'?'in':'out'))+'">'+money(Math.abs(b))+'<small>'+balText(p,b)+'</small></div></div>';
+}
+function partiesHTML(){
+  var h='<button class="btn" onclick="partyForm()">+ Add customer or supplier</button><div class="gap"></div>';
+  h+='<div class="chips">'+[['all','All'],['customer','Customers'],['supplier','Suppliers']].map(function(c){return '<button class="chip '+(filter===c[0]?'on':'')+'" onclick="filter=\''+c[0]+'\';render()">'+c[1]+'</button>'}).join('')+'</div>';
+  h+='<input id="srch" placeholder="Search name or phone" value="'+esc(q)+'" oninput="q=this.value;listOnly()">';
+  h+='<div class="card" id="plist">'+listHTML()+'</div>';
+  return h;
+}
+function listHTML(){
+  var ql=q.trim().toLowerCase();
+  var l=parties.filter(function(p){return (filter==='all'||p.type===filter)&&(!ql||(p.name+' '+(p.phone||'')).toLowerCase().indexOf(ql)>-1)})
+    .sort(function(a,b){return a.name.localeCompare(b.name)});
+  if(!l.length)return '<div class="empty">No parties found.</div>';
+  return l.map(function(p){return partyRow(p,balance(p.id))}).join('');
+}
+function listOnly(){$('#plist').innerHTML=listHTML()}
+function partyHTML(p){
+  var b=balance(p.id),c=esc(settings.currency);
+  var h='<div class="card hero"><div class="lbl">'+balText(p,b)+'</div><div class="big '+(b===0?'':(p.type==='customer'?'in':'out'))+'">'+money(Math.abs(b))+' '+c+'</div>'+
+    '<div class="lbl gap">'+(p.type==='customer'?'Customer':'Supplier')+(p.phone?' - '+esc(p.phone):'')+(p.note?'<br>'+esc(p.note):'')+'</div></div>';
+  h+='<div class="row"><button class="btn" onclick="entryForm('+p.id+',0,\'bill\')">+ '+words(p,'bill')+'</button><button class="btn alt" onclick="entryForm('+p.id+',0,\'pay\')">+ '+words(p,'pay')+'</button></div><div class="gap"></div>';
+  var l=entries.filter(function(e){return e.partyId===p.id}).sort(function(a,b){return a.date===b.date?b.id-a.id:b.date.localeCompare(a.date)});
+  h+='<div class="card"><b>Statement</b>';
+  if(!l.length)h+='<div class="empty">No entries yet.</div>';
+  l.forEach(function(e){h+='<div class="item" onclick="entryForm('+p.id+','+e.id+',\''+e.kind+'\')">'+dot(e.kind)+'<div class="grow">'+words(p,e.kind)+'<small>'+esc(e.date)+(e.ref?' - Ref '+esc(e.ref):'')+(e.note?' - '+esc(e.note):'')+'</small></div><div class="amt '+(e.kind==='pay'?'in':'out')+'">'+(e.kind==='pay'?'-':'+')+money(e.amount)+'</div></div>'});
+  h+='</div><button class="btn alt" onclick="partyForm('+p.id+')">Edit or delete this party</button>';
+  return h;
+}
+function backupHTML(){
+  var last=settings.lastBackup?new Date(settings.lastBackup).toLocaleString():'Never';
+  return '<div class="card"><b>Last backup:</b> '+esc(last)+'<br><span class="lbl">'+parties.length+' parties, '+entries.length+' entries</span></div>'+
+  '<div class="warn">Your data is stored only on this phone. If you clear Chrome data, uninstall the app, or lose the phone, the data is gone. Save backups often and keep a copy outside the phone (Google Drive, WhatsApp, email).</div>'+
+  '<button class="btn" onclick="backupDownload()">Save backup file</button><div class="gap"></div>'+
+  '<button class="btn alt" onclick="backupShare()">Share backup (Drive, WhatsApp, email)</button><div class="gap"></div>'+
+  '<button class="btn alt" onclick="exportCSV()">Export all entries to Excel (CSV)</button><div class="gap"></div>'+
+  '<div class="card gap"><b>Restore from backup</b><div class="lbl">This replaces all current data.</div><div class="gap"></div><input type="file" id="rf" accept=".json,application/json"><button class="btn red" onclick="restore()">Restore</button></div>'+
+  '<div class="card"><label>Currency label</label><input id="cur" value="'+esc(settings.currency)+'" maxlength="6"><button class="btn alt" onclick="saveCur()">Save currency</button></div>';
+}
+
+/* ---------- Forms ---------- */
+function modal(html){closeModal();var o=document.createElement('div');o.className='ov';o.id='ov';o.innerHTML='<div class="sheet">'+html+'</div>';o.addEventListener('click',function(e){if(e.target===o)closeModal()});document.body.appendChild(o)}
+function closeModal(){var o=$('#ov');if(o)o.remove()}
+
+function partyForm(id){
+  var p=id?partyById(id):{type:'customer',name:'',phone:'',note:''};
+  modal('<h2>'+(id?'Edit party':'New party')+'</h2>'+
+  '<label>Type</label><select id="f-type"><option value="customer"'+(p.type==='customer'?' selected':'')+'>Customer (pays you)</option><option value="supplier"'+(p.type==='supplier'?' selected':'')+'>Supplier (you pay)</option></select>'+
+  '<label>Name</label><input id="f-name" value="'+esc(p.name)+'">'+
+  '<label>Phone (optional)</label><input id="f-phone" type="tel" value="'+esc(p.phone)+'">'+
+  '<label>Note (optional)</label><input id="f-note" value="'+esc(p.note)+'">'+
+  '<button class="btn" onclick="saveParty('+(id||0)+')">Save</button>'+
+  (id?'<div class="gap"></div><button class="btn red" onclick="delParty('+id+')">Delete this party</button>':'')+
+  '<div class="gap"></div><button class="btn alt" onclick="closeModal()">Cancel</button>');
+}
+async function saveParty(id){
+  var name=$('#f-name').value.trim();
+  if(!name){toast('Enter a name');return}
+  var dup=parties.some(function(p){return p.id!==id&&p.name.toLowerCase()===name.toLowerCase()&&p.type===$('#f-type').value});
+  if(dup&&!confirm('A party with this name already exists. Save anyway?'))return;
+  var o={type:$('#f-type').value,name:name,phone:$('#f-phone').value.trim(),note:$('#f-note').value.trim()};
+  if(id)o.id=id;
+  var k=await dbPut('parties',o);
+  await load();closeModal();toast('Saved');
+  if(!id)openParty(k);else render();
+}
+async function delParty(id){
+  var n=entries.filter(function(e){return e.partyId===id}).length;
+  if(!confirm('Delete this party and its '+n+' entries? This cannot be undone. Have you made a backup?'))return;
+  for(var i=0;i<entries.length;i++)if(entries[i].partyId===id)await dbDel('entries',entries[i].id);
+  await dbDel('parties',id);await load();closeModal();goParties();toast('Deleted');
+}
+function entryForm(partyId,id,kind){
+  var p=partyById(partyId);
+  var e=id?entries.find(function(x){return x.id===id}):{kind:kind,amount:'',date:today(),ref:'',note:''};
+  modal('<h2>'+words(p,e.kind)+'</h2>'+
+  '<label>Amount</label><input id="e-amt" type="number" inputmode="decimal" step="0.01" min="0" value="'+esc(e.amount)+'">'+
+  '<label>Date</label><input id="e-date" type="date" value="'+esc(e.date)+'">'+
+  '<label>Reference (invoice, cheque, receipt no.)</label><input id="e-ref" value="'+esc(e.ref)+'">'+
+  '<label>Note (optional)</label><input id="e-note" value="'+esc(e.note)+'">'+
+  '<button class="btn" onclick="saveEntry('+partyId+','+(id||0)+',\''+e.kind+'\')">Save</button>'+
+  (id?'<div class="gap"></div><button class="btn red" onclick="delEntry('+id+')">Delete this entry</button>':'')+
+  '<div class="gap"></div><button class="btn alt" onclick="closeModal()">Cancel</button>');
+}
+async function saveEntry(partyId,id,kind){
+  var a=Math.round(parseFloat($('#e-amt').value)*100)/100,d=$('#e-date').value;
+  if(!(a>0)){toast('Enter an amount above 0');return}
+  if(!d){toast('Choose a date');return}
+  var o={partyId:partyId,kind:kind,amount:a,date:d,ref:$('#e-ref').value.trim(),note:$('#e-note').value.trim()};
+  if(id)o.id=id;
+  await dbPut('entries',o);await load();closeModal();render();toast('Saved');
+}
+async function delEntry(id){
+  if(!confirm('Delete this entry? This cannot be undone.'))return;
+  await dbDel('entries',id);await load();closeModal();render();toast('Deleted');
+}
+
+/* ---------- Backup and restore ---------- */
+function backupData(){return JSON.stringify({app:'payment-ledger',version:1,exported:new Date().toISOString(),currency:settings.currency,parties:parties,entries:entries})}
+function fileName(ext){return 'ledger-backup-'+today()+'.'+ext}
+function saveBlob(blob,name){var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},1500)}
+async function markBackup(){await saveSetting('lastBackup',new Date().toISOString());render()}
+async function backupDownload(){saveBlob(new Blob([backupData()],{type:'application/json'}),fileName('json'));await markBackup();toast('Backup saved to Downloads')}
+async function backupShare(){
+  var f=new File([backupData()],fileName('json'),{type:'application/json'});
+  if(navigator.canShare&&navigator.canShare({files:[f]})){
+    try{await navigator.share({files:[f],title:'Ledger backup'});await markBackup();return}catch(e){if(e&&e.name==='AbortError')return}
+  }
+  toast('Sharing not supported. Saving file instead.');backupDownload();
+}
+function csvCell(v){v=String(v==null?'':v);return /[",\n\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v}
+function exportCSV(){
+  var rows=[['Date','Party','Type','Entry','Amount','Reference','Note']];
+  entries.slice().sort(function(a,b){return a.date.localeCompare(b.date)}).forEach(function(e){
+    var p=partyById(e.partyId);if(!p)return;
+    rows.push([e.date,p.name,p.type,words(p,e.kind),e.amount,e.ref,e.note])});
+  saveBlob(new Blob(['\ufeff'+rows.map(function(r){return r.map(csvCell).join(',')}).join('\r\n')],{type:'text/csv'}),'ledger-entries-'+today()+'.csv');
+}
+async function saveCur(){await saveSetting('currency',($('#cur').value.trim()||'SAR').toUpperCase());toast('Saved');render()}
+function restore(){
+  var f=$('#rf').files[0];
+  if(!f){toast('Choose a backup file first');return}
+  var r=new FileReader();
+  r.onload=async function(){
+    var d;
+    try{d=JSON.parse(r.result)}catch(e){alert('This file is not a valid backup.');return}
+    if(!d||d.app!=='payment-ledger'||!Array.isArray(d.parties)||!Array.isArray(d.entries)){alert('This file is not a Payment Ledger backup.');return}
+    var bad=d.entries.some(function(e){return typeof e.amount!=='number'||!e.date||(e.kind!=='bill'&&e.kind!=='pay')||!d.parties.some(function(p){return p.id===e.partyId})});
+    if(bad){alert('Backup file has damaged entries. Nothing was changed.');return}
+    if(!confirm('Replace ALL current data with this backup ('+d.parties.length+' parties, '+d.entries.length+' entries)?'))return;
+    try{
+      await new Promise(function(res,rej){
+        var t=db.transaction(['parties','entries','meta'],'readwrite');
+        t.objectStore('parties').clear();t.objectStore('entries').clear();
+        d.parties.forEach(function(p){t.objectStore('parties').put(p)});
+        d.entries.forEach(function(e){t.objectStore('entries').put(e)});
+        if(d.currency)t.objectStore('meta').put({k:'currency',v:d.currency});
+        t.oncomplete=res;t.onerror=t.onabort=function(){rej(t.error)};
+      });
+      await load();render();toast('Backup restored');
+    }catch(e){alert('Restore failed. Your old data was not changed.');}
+  };
+  r.readAsText(f);
+}
+
+/* ---------- Start ---------- */
+(async function(){
+  try{
+    await openDB();await load();render();
+    if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();
+  }catch(e){$('#main').innerHTML='<div class="warn">Storage is not available in this browser. Open this app in Chrome (not private mode).</div>'}
+  if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(function(){});
+})();
+</script>
+</body>
+</html>
